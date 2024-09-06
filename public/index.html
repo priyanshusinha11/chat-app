@@ -5,14 +5,104 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat APP</title>
+    <style>
+      
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f4f4f9;
+        margin: 0;
+      }
+
+      .chat-container {
+        width: 400px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        box-sizing: border-box;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      #messages {
+        height: 250px;
+        overflow-y: auto;
+        background-color: #e9e9ef;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+      }
+
+      /* Individual message styling */
+      #messages p {
+        background-color: #007bff;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 5px 0;
+        width: fit-content;
+        max-width: 80%;
+        animation: fadein 0.5s ease;
+      }
+
+      /* Input and button styling */
+      #message {
+        width: calc(100% - 90px);
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-right: 10px;
+        outline: none;
+        font-size: 16px;
+      }
+
+      #sendBtn {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease;
+      }
+
+      #sendBtn:hover {
+        background-color: #0056b3;
+      }
+
+      /* Animations */
+      @keyframes fadein {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
   </head>
   <body>
-    <h1>Chatting</h1>
+    <div class="chat-container">
+      <h1>Chat App</h1>
 
-    <input type="text" id="message" placeholder="Enter Message" />
-    <button id="sendBtn">Send</button>
+      <div id="messages"></div>
 
-    <div id="messages"></div>
+      <div style="display: flex;">
+        <input type="text" id="message" placeholder="Enter Message" />
+        <button id="sendBtn">Send</button>
+      </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -21,16 +111,30 @@
       const messageInput = document.getElementById("message");
       const allMessages = document.getElementById("messages");
 
+      // Handle receiving messages
       socket.on("message", (message) => {
         const p = document.createElement("p");
         p.innerText = message;
         allMessages.appendChild(p);
+
+        // Auto-scroll to the bottom
+        allMessages.scrollTop = allMessages.scrollHeight;
       });
 
+      // Send message to server on button click
       sendBtn.addEventListener("click", (e) => {
         const message = messageInput.value;
-        console.log(message);
-        socket.emit("user-message", message);
+        if (message.trim() !== "") {
+          socket.emit("user-message", message);
+          messageInput.value = ""; // Clear input after sending
+        }
+      });
+
+      // Send message when pressing 'Enter' key
+      messageInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          sendBtn.click();
+        }
       });
     </script>
   </body>
