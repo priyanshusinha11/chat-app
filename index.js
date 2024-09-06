@@ -7,10 +7,17 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-
 io.on("connection", (socket) => {
-    socket.on("user-message", (message) => {
-        io.emit("message", message);
+    console.log("A user connected");
+
+    socket.on("user-message", (data) => {
+        const timestamp = new Date().toLocaleTimeString(); 
+        const messageData = {
+            username: data.username,
+            message: data.message,
+            time: timestamp,
+        };
+        io.emit("message", messageData); 
     });
 });
 
