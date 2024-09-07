@@ -1,6 +1,10 @@
 'use client'
 import classes from './page.module.css'
+import { useSocket } from '../context/SocketProvider'
+import { useState } from 'react'
 export default function Page() {
+  const { sendMessage } = useSocket()
+  const [message, setMessage] = useState('')
   return (
     <div>
       <div>
@@ -9,8 +13,8 @@ export default function Page() {
         </h1>
       </div>
       <div>
-        <input className={classes["chat-input"]} placeholder="Message..." />
-        <button className={classes["button"]}>Send</button>
+        <input onChange={e => setMessage(e.target.value)} className={classes["chat-input"]} placeholder="Message..." />
+        <button onClick={e => sendMessage(message)} className={classes["button"]}>Send</button>
       </div>
     </div>
   )
