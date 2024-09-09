@@ -1,5 +1,7 @@
 import { Server } from "socket.io";
 import Redis from "ioredis";
+import prismaClient from "./prisma";
+import { produceMessage } from "./kafka";
 
 const pub = new Redis({
     host: process.env.REDIS_HOST,
@@ -25,15 +27,7 @@ class SocketService {
                 origin: "*",
             },
         });
-
-        sub.on("error", (err) => console.error("Redis Subscriber Error:", err));
-        sub.subscribe("MESSAGES", (err, count) => {
-            if (err) {
-                console.error("Failed to subscribe to channel 'MESSAGES':", err.message);
-            } else {
-                console.log(`Subscribed successfully! This client is currently subscribed to ${count} channels.`);
-            }
-        });
+        sub.subscribe("MESSAGES");
     }
 
     public initListeners() {
@@ -44,18 +38,17 @@ class SocketService {
             console.log(`New Socket Connected`, socket.id);
             socket.on("event:message", async ({ message }: { message: string }) => {
                 console.log("New Message Rec.", message);
-                try {
-                    await pub.publish("MESSAGES", JSON.stringify({ message }));
-                } catch (err) {
-                    console.error("Failed to publish message:", err);
-                }
+                // publish this message to redis
+                await pub.publish("MESSAGES", JSON.stringify({ message }));
             });
         });
 
-        sub.on("message", (channel, message) => {
+        sub.on("message", async (channel, message) => {
             if (channel === "MESSAGES") {
                 console.log("new message from redis", message);
                 io.emit("message", message);
+                await produceMessage(message);
+                console.log("Message Produced to Kafka Broker");
             }
         });
     }
