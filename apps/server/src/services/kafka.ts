@@ -1,18 +1,9 @@
 import { Kafka, Producer } from "kafkajs";
-import fs from "fs";
-import path from "path";
 import prismaClient from "./prisma";
 
 const kafka = new Kafka({
-    brokers: [""],
-    ssl: {
-        ca: [fs.readFileSync(path.resolve("./ca.pem"), "utf-8")],
-    },
-    sasl: {
-        username: "",
-        password: "",
-        mechanism: "",
-    },
+    brokers: ["localhost:9092"],
+    // No SSL or SASL needed for local development
 });
 
 let producer: null | Producer = null;
@@ -39,6 +30,19 @@ export async function startMessageConsumer() {
     console.log("Consumer is running..");
     const consumer = kafka.consumer({ groupId: "default" });
     await consumer.connect();
+
+    // Create the topic if it doesn't exist
+    try {
+        const admin = kafka.admin();
+        await admin.connect();
+        await admin.createTopics({
+            topics: [{ topic: "MESSAGES", numPartitions: 1, replicationFactor: 1 }],
+        });
+        await admin.disconnect();
+    } catch (error) {
+        console.log("Topic might already exist:", error);
+    }
+
     await consumer.subscribe({ topic: "MESSAGES", fromBeginning: true });
 
     await consumer.run({
@@ -53,7 +57,7 @@ export async function startMessageConsumer() {
                     },
                 });
             } catch (err) {
-                console.log("Something is wrong");
+                console.log("Something is wrong", err);
                 pause();
                 setTimeout(() => {
                     consumer.resume([{ topic: "MESSAGES" }]);
