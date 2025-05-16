@@ -12,8 +12,8 @@ export default function Page() {
         <button onClick={e => sendMessage(message)} className={classes["button"]}>Send</button>
       </div>
       <div>
-        {messages.map((e) => (
-          <li>{e}</li>
+        {messages.map((e, index) => (
+          <li key={index}>{e}</li>
         ))}
       </div>
     </div>
